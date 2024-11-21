@@ -3,26 +3,36 @@
 output it to plain text, html, xml or tags.
 """
 
+from __future__ import annotations
+
 import argparse
 import logging
 import os
 import sys
-from typing import Any, Container, Iterable, List, Optional
 import pymupdf
-import doclayout_yolo
-import tempfile
-import urllib.request
+from huggingface_hub import hf_hub_download
 
-import pdf2zh.high_level
-from pdf2zh.layout import LAParams
+from pdf2zh import __version__
 from pdf2zh.pdfexceptions import PDFValueError
-from pdf2zh.utils import AnyIO
+from typing import Any, Container, Iterable, List, Optional, TYPE_CHECKING
 
-logging.basicConfig()
-
-doclayout_yolo.utils.LOGGER.setLevel(logging.WARNING)
+if TYPE_CHECKING:
+    from pdf2zh.utils import AnyIO
+    from pdf2zh.layout import LAParams
 
 OUTPUT_TYPES = ((".htm", "html"), (".html", "html"), (".xml", "xml"), (".tag", "tag"))
+
+
+def setup_log() -> None:
+    import doclayout_yolo
+
+    logging.basicConfig()
+    doclayout_yolo.utils.LOGGER.setLevel(logging.WARNING)
+
+
+def check_files(files: List[str]) -> List[str]:
+    missing_files = [file for file in files if not os.path.exists(file)]
+    return missing_files
 
 
 def float_or_disabled(x: str) -> Optional[float]:
@@ -58,6 +68,9 @@ def extract_text(
     service: str = "",
     **kwargs: Any,
 ) -> AnyIO:
+    import doclayout_yolo
+    import pdf2zh.high_level
+
     if not files:
         raise PDFValueError("Must provide files to work upon!")
 
@@ -67,10 +80,11 @@ def extract_text(
                 output_type = alttype
 
     outfp: AnyIO = sys.stdout
-    pth = os.path.join(tempfile.gettempdir(), 'doclayout_yolo_docstructbench_imgsz1024.pt')
-    if not os.path.exists(pth):
-        print('Downloading...')
-        urllib.request.urlretrieve("http://huggingface.co/juliozhao/DocLayout-YOLO-DocStructBench/resolve/main/doclayout_yolo_docstructbench_imgsz1024.pt",pth)
+    # pth = os.path.join(tempfile.gettempdir(), 'doclayout_yolo_docstructbench_imgsz1024.pt')
+    # if not os.path.exists(pth):
+    #     print('Downloading...')
+    #     urllib.request.urlretrieve("http://huggingface.co/juliozhao/DocLayout-YOLO-DocStructBench/resolve/main/doclayout_yolo_docstructbench_imgsz1024.pt",pth)
+    pth = hf_hub_download(repo_id="juliozhao/DocLayout-YOLO-DocStructBench", filename="doclayout_yolo_docstructbench_imgsz1024.pt")
     model = doclayout_yolo.YOLOv10(pth)
 
     for file in files:
@@ -129,14 +143,14 @@ def create_parser() -> argparse.ArgumentParser:
         "files",
         type=str,
         default=None,
-        nargs="+",
+        nargs="*",
         help="One or more paths to PDF files.",
     )
     parser.add_argument(
         "--version",
         "-v",
         action="version",
-        version=f"pdf2zh v{pdf2zh.__version__}",
+        version=f"pdf2zh v{__version__}",
     )
     parser.add_argument(
         "--debug",
@@ -204,6 +218,12 @@ def create_parser() -> argparse.ArgumentParser:
         default=4,
         help="The number of threads to execute translation.",
     )
+    parse_params.add_argument(
+        "--interactive",
+        "-i",
+        action="store_true",
+        help="Interact with GUI.",
+    )
 
     return parser
 
@@ -226,6 +246,19 @@ def parse_args(args: Optional[List[str]]) -> argparse.Namespace:
 
 def main(args: Optional[List[str]] = None) -> int:
     parsed_args = parse_args(args)
+
+    missing_files = check_files(parsed_args.files)
+    if missing_files:
+        print(f"The following files do not exist:", file=sys.stderr)
+        for file in missing_files:
+            print(f"  {file}", file=sys.stderr)
+        return -1
+    if parsed_args.interactive:
+        from pdf2zh.gui import setup_gui
+        setup_gui()
+        return 0
+
+    setup_log()
     extract_text(**vars(parsed_args))
     return 0
 

@@ -23,8 +23,10 @@ from pdf2zh.translator import (
     BaseTranslator,
     GoogleTranslator,
     DeepLTranslator,
+    DeepLXTranslator,
     OllamaTranslator,
     OpenAITranslator,
+    AzureTranslator,
 )
 def remove_control_characters(s):
     return "".join(ch for ch in s if unicodedata.category(ch)[0]!="C")
@@ -374,6 +376,10 @@ class TextConverter(PDFConverter[AnyIO]):
             self.translator: BaseTranslator = DeepLTranslator(
                 service, lang_out, lang_in, None
             )
+        elif param[0] == "deeplx":
+            self.translator: BaseTranslator = DeepLXTranslator(
+                service, lang_out, lang_in, None
+            )
         elif param[0] == "ollama":
             self.translator: BaseTranslator = OllamaTranslator(
                 service, lang_out, lang_in, param[1]
@@ -381,6 +387,10 @@ class TextConverter(PDFConverter[AnyIO]):
         elif param[0] == 'openai':
             self.translator: BaseTranslator = OpenAITranslator(
                 service, lang_out, lang_in, param[1]
+            )
+        elif param[0] == 'azure':
+            self.translator: BaseTranslator = AzureTranslator(
+                service, lang_out, lang_in, None
             )
         else:
             raise ValueError("Unsupported translation service")
@@ -422,7 +432,7 @@ class TextConverter(PDFConverter[AnyIO]):
                     if re.match(self.vchar,char):
                         return True
                 else:
-                    if char and char!=' ' and unicodedata.category(char[0]) in ['Lm','Mn','Sk','Sm','Zl','Zp','Zs']: # 文字修饰符、数学符号、分隔符号
+                    if char and char!=' ' and (unicodedata.category(char[0]) in ['Lm','Mn','Sk','Sm','Zl','Zp','Zs'] or ord(char[0]) in range(0x370,0x400)): # 文字修饰符、数学符号、分隔符号、希腊字母
                         return True
                 return False
             ptr=0

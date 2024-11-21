@@ -29,6 +29,10 @@ setup(
         "ollama",
         "deepl<1.19.1",
         "openai",
+        "azure-ai-translation-text<=1.0.1",
+        "gradio",
+        "huggingface_hub",
+        "torch",
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
