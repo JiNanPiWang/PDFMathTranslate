@@ -12,6 +12,8 @@
     <img src="https://img.shields.io/pypi/v/pdf2zh"/></a>
   <a href="https://pepy.tech/projects/pdf2zh">
     <img src="https://static.pepy.tech/badge/pdf2zh"></a>
+  <a href="https://hub.docker.com/repository/docker/byaidu/pdf2zh">
+    <img src="https://img.shields.io/docker/pulls/byaidu/pdf2zh"></a>
   <!-- License -->
   <a href="./LICENSE">
     <img src="https://img.shields.io/github/license/Byaidu/PDFMathTranslate"/></a>
@@ -35,14 +37,15 @@
 
 <h2 id="updates">近期更新</h2>
 
-
+- [Nov. 24 2024] 为降低依赖大小，提供 [ONNX](https://github.com/onnx/onnx) 支持 *(by [@Wybxc](https://github.com/Wybxc))*  
+- [Nov. 23 2024] 🌟 [免费公共服务](#demo) 上线! *(by [@Byaidu](https://github.com/Byaidu))*  
+- [Nov. 23 2024] 非 PDF/A 文档也能正常翻译了 *(by [@reycn](https://github.com/reycn))*  
+- [Nov. 23 2024] 防止网页爬虫的防火墙 *(by [@Byaidu](https://github.com/Byaidu))*  
+- [Nov. 22 2024] 图形用户界面现已支持意大利语，并获得了一些更新 *(by [@Byaidu](https://github.com/Byaidu), [@reycn](https://github.com/reycn))*  
+- [Nov. 22 2024] 现在你可以将自己部署的服务分享给朋友了 *(by [@Zxis233](https://github.com/Zxis233))*  
+- [Nov. 22 2024] 支持腾讯翻译 *(by [@hellofinch](https://github.com/hellofinch))*  
 - [Nov. 21 2024] 图形用户界面现在支持下载双语文档 *(by [@reycn](https://github.com/reycn))*  
-- [Nov. 20 2024] 图形用户界面现在支持指定 Ollama 和 OpenAI 的模型 *(by [@IuvenisSapiens](https://github.com/IuvenisSapiens), [@Byaidu](https://github.com/Byaidu))*  
 - [Nov. 20 2024] 🌟 提供了 [在线演示](#demo)！ *(by [@reycn](https://github.com/reycn))*  
-- [Nov. 20 2024] 支持 [容器化部署](#docker) *(by [@Byaidu](https://github.com/Byaidu))*  
-- [Nov. 20 2024] 支持速度更快的 [多线程翻译](#threads) *(by [@Byaidu](https://github.com/Byaidu))*  
-- [Nov. 19 2024] 提供了[图形用户界面](#gui) *(by [@reycn](https://github.com/reycn))*  
-- [Nov. 18 2024] 支持更多翻译服务，包含 [DeepL, DeepLX, 和 Azure](#services) *(by [@reycn](https://github.com/reycn), [@Hanaasagi](https://github.com/Hanaasagi))*  
 
 <h2 id="preview">效果预览</h2>
 
@@ -52,7 +55,13 @@
 
 <h2 id="demo">在线演示 🌟</h2>
 
-你可以立即尝试 [在 HuggingFace 上的在线演示](https://huggingface.co/spaces/reycn/PDFMathTranslate-Docker) 而无需安装.  
+### 免费服务 (<https://pdf2zh.com/>)
+
+你可以立即尝试 [免费公共服务](https://pdf2zh.com/) 而无需安装。
+
+### Hugging Face 在线演示
+
+你可以立即尝试 [在 HuggingFace 上的在线演示](https://huggingface.co/spaces/reycn/PDFMathTranslate-Docker) 而无需安装。
 请注意，演示的计算资源有限，因此请避免滥用。
 
 <h2 id="install">安装和使用</h2>
@@ -273,12 +282,14 @@ pdf2zh example.pdf -t 1
   <img src="https://opencollective.com/PDFMathTranslate/contributors.svg?width=890&button=false" />
 </a>
 
+![Alt](https://repobeats.axiom.co/api/embed/dfa7583da5332a11468d686fbd29b92320a6a869.svg "Repobeats analytics image")
+
 <h2 id="star_hist">星标历史</h2>
 
 <a href="https://star-history.com/#Byaidu/PDFMathTranslate&Date">
  <picture>
    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Byaidu/PDFMathTranslate&type=Date&theme=dark" />
    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Byaidu/PDFMathTranslate&type=Date" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Byaidu/PDFMathTranslate&type=Date" width="70%"/>
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Byaidu/PDFMathTranslate&type=Date"/>
  </picture>
 </a>

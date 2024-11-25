@@ -1,12 +1,14 @@
 import os
-import re
-import subprocess
-import tempfile
+import shutil
 from pathlib import Path
+from pdf2zh import __version__
+from pdf2zh.pdf2zh import extract_text
 
 import gradio as gr
 import numpy as np
 import pymupdf
+import tqdm
+import requests
 
 # Map service names to pdf2zh service options
 service_map = {
@@ -26,7 +28,39 @@ lang_map = {
     "Korean": "ko",
     "Russian": "ru",
     "Spanish": "es",
+    "Italian": "it",
 }
+page_map = {
+    "All": None,
+    "First": [0],
+    "First 5 pages": list(range(0, 5)),
+}
+
+flag_demo = False
+if os.environ.get("PDF2ZH_DEMO"):
+    flag_demo = True
+    service_map = {
+        "Google": "google",
+    }
+    page_map = {
+        "First": [0],
+        "First 20 pages": list(range(0, 20)),
+    }
+    client_key = os.environ.get("PDF2ZH_CLIENT_KEY")
+    server_key = os.environ.get("PDF2ZH_SERVER_KEY")
+
+
+def verify_recaptcha(response):
+    recaptcha_url = "https://www.google.com/recaptcha/api/siteverify"
+
+    print("reCAPTCHA", server_key, response)
+
+    data = {"secret": server_key, "response": response}
+    result = requests.post(recaptcha_url, data=data).json()
+
+    print("reCAPTCHA", result.get("success"))
+
+    return result.get("success")
 
 
 def pdf_preview(file):
@@ -40,146 +74,83 @@ def pdf_preview(file):
 def upload_file(file, service, progress=gr.Progress()):
     """Handle file upload, validation, and initial preview."""
     if not file or not os.path.exists(file):
-        return None, None, gr.update(visible=False)
+        return None, None
 
-    progress(0.3, desc="Converting PDF for preview...")
     try:
         # Convert first page for preview
         preview_image = pdf_preview(file)
 
-        return file, preview_image, gr.update(visible=True)
+        return file, preview_image
     except Exception as e:
         print(f"Error converting PDF: {e}")
-        return None, None, gr.update(visible=False)
+        return None, None
 
 
 def translate(
-    file_path, service, model_id, lang, page_range, extra_args, progress=gr.Progress()
+    file_path,
+    service,
+    model_id,
+    lang,
+    page_range,
+    recaptcha_response,
+    progress=gr.Progress(),
 ):
     """Translate PDF content using selected service."""
     if not file_path:
-        return (
-            None,
-            None,
-            None,
-            gr.update(visible=False),
-            gr.update(visible=False),
-            gr.update(visible=False),
-        )
+        raise gr.Error("No input")
+
+    if flag_demo and not verify_recaptcha(recaptcha_response):
+        raise gr.Error("reCAPTCHA fail")
 
     progress(0, desc="Starting translation...")
 
-    # Create a temporary working directory using Gradio's file utilities
-    with tempfile.TemporaryDirectory() as temp_dir:
-        # Create safe paths using pathlib
-        temp_path = Path(temp_dir)
-        input_pdf = temp_path / "input.pdf"
+    output = Path("pdf2zh_files")
+    output.mkdir(parents=True, exist_ok=True)
+    filename = os.path.splitext(os.path.basename(file_path))[0]
+    file_en = output / f"{filename}.pdf"
+    file_zh = output / f"{filename}-zh.pdf"
+    file_dual = output / f"{filename}-dual.pdf"
+    shutil.copyfile(file_path, file_en)
 
-        # Copy input file to temp directory
-        progress(0.2, desc="Preparing files...")
-        with open(file_path, "rb") as src, open(input_pdf, "wb") as dst:
-            dst.write(src.read())
+    selected_service = service_map.get(service, "google")
+    selected_page = page_map.get(page_range, [0])
+    lang_to = lang_map.get(lang, "zh")
+    if selected_service == "google":
+        lang_to = "zh-CN" if lang_to == "zh" else lang_to
 
-        selected_service = service_map.get(service, "google")
-        lang_to = lang_map.get(lang, "zh")
+    print(f"Files before translation: {os.listdir(output)}")
 
-        # Execute translation in temp directory with real-time progress
-        progress(0.3, desc=f"Starting translation with {selected_service}...")
+    def progress_bar(t: tqdm.tqdm):
+        progress(t.n / t.total, desc="Translating...")
 
-        # Create output directory for translated files
-        output_dir = Path("gradio_files") / "outputs"
-        output_dir.mkdir(parents=True, exist_ok=True)
-        final_output = output_dir / f"translated_{os.path.basename(file_path)}"
-        final_output_dual = output_dir / f"dual_{os.path.basename(file_path)}"
+    param = {
+        "files": [file_en],
+        "pages": selected_page,
+        "lang_in": "auto",
+        "lang_out": lang_to,
+        "service": f"{selected_service}:{model_id}",
+        "output": output,
+        "thread": 4,
+        "callback": progress_bar,
+    }
+    print(param)
+    extract_text(**param)
+    print(f"Files after translation: {os.listdir(output)}")
 
-        # Prepare extra arguments
-        extra_args = extra_args.strip()
-        # Add page range arguments
-        if page_range == "All":
-            extra_args += ""
-        elif page_range == "First":
-            extra_args += " -p 1"
-        elif page_range == "First 5 pages":
-            extra_args += " -p 1-5"
+    if not file_zh.exists() or not file_dual.exists():
+        raise gr.Error("No output")
 
-        # Execute translation command
-        if selected_service == "google":
-            lang_to = "zh-CN" if lang_to == "zh" else lang_to
-
-        if selected_service in ["ollama", "openai"]:
-            command = f'cd "{temp_path}" && pdf2zh "{input_pdf}" -lo {lang_to} -s {selected_service}:{model_id} {extra_args}'
-        else:
-            command = f'cd "{temp_path}" && pdf2zh "{input_pdf}" -lo {lang_to} -s {selected_service} {extra_args}'
-        print(f"Executing command: {command}")
-        print(f"Files in temp directory: {os.listdir(temp_path)}")
-
-        process = subprocess.Popen(
-            command,
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            universal_newlines=True,
-        )
-
-        # Monitor progress from command output
-        while True:
-            output = process.stdout.readline()
-            if output == "" and process.poll() is not None:
-                break
-            if output:
-                print(f"Command output: {output.strip()}")
-                # Look for percentage in output
-                match = re.search(r"(\d+)%", output.strip())
-                if match:
-                    percent = int(match.group(1))
-                    # Map command progress (0-100%) to our progress range (30-80%)
-                    progress_val = 0.3 + (percent * 0.5 / 100)
-                    progress(progress_val, desc=f"Translating content: {percent}%")
-
-        # Get the return code
-        return_code = process.poll()
-        print(f"Command completed with return code: {return_code}")
-
-        # Check if translation was successful
-        translated_file = temp_path / "input-zh.pdf" # <= Do not change filename
-        dual_file = temp_path / "input-dual.pdf"
-        print(f"Files after translation: {os.listdir(temp_path)}")
-
-        if not translated_file.exists() and not dual_file.exists():
-            print("Translation failed: No output files found")
-            return (
-                None,
-                None,
-                None,
-                gr.update(visible=False),
-                gr.update(visible=False),
-                gr.update(visible=False),
-            )
-
-        # Copy the translated files to permanent locations
-        progress(0.8, desc="Saving translated files...")
-
-        if translated_file.exists():
-            with open(translated_file, "rb") as src, open(final_output, "wb") as dst:
-                dst.write(src.read())
-
-        if dual_file.exists():
-            with open(dual_file, "rb") as src, open(final_output_dual, "wb") as dst:
-                dst.write(src.read())
-
-        # Generate preview of translated PDF
-        progress(0.9, desc="Generating preview...")
-        try:
-            translated_preview = pdf_preview(str(final_output))
-        except Exception as e:
-            print(f"Error generating preview: {e}")
-            translated_preview = None
+    try:
+        translated_preview = pdf_preview(str(file_zh))
+    except Exception:
+        raise gr.Error("No preview")
 
     progress(1.0, desc="Translation complete!")
+
     return (
-        str(final_output),
+        str(file_zh),
         translated_preview,
-        str(final_output_dual),
+        str(file_dual),
         gr.update(visible=True),
         gr.update(visible=True),
         gr.update(visible=True),
@@ -187,25 +158,95 @@ def translate(
 
 
 # Global setup
+custom_blue = gr.themes.Color(
+    c50="#E8F3FF",
+    c100="#BEDAFF",
+    c200="#94BFFF",
+    c300="#6AA1FF",
+    c400="#4080FF",
+    c500="#165DFF",  # Primary color
+    c600="#0E42D2",
+    c700="#0A2BA6",
+    c800="#061D79",
+    c900="#03114D",
+    c950="#020B33",
+)
+
 with gr.Blocks(
     title="PDFMathTranslate - PDF Translation with preserved formats",
+    theme=gr.themes.Default(
+        primary_hue=custom_blue, spacing_size="md", radius_size="lg"
+    ),
     css="""
     .secondary-text {color: #999 !important;}
     footer {visibility: hidden}
     .env-warning {color: #dd5500 !important;}
     .env-success {color: #559900 !important;}
+
+    /* Add dashed border to input-file class */
+    .input-file {
+        border: 1.2px dashed #165DFF !important;
+        border-radius: 6px !important;
+        # background-color: #ffffff !important;
+        transition: background-color 0.4s ease-out;
+    }
+
+    .input-file:hover {
+        border: 1.2px dashed #165DFF !important;
+        border-radius: 6px !important;
+        color: #165DFF !important;
+        background-color: #E8F3FF !important;
+        transition: background-color 0.2s ease-in;
+    }
+
+    .progress-bar-wrap {
+    border-radius: 8px !important;
+    }
+    .progress-bar {
+    border-radius: 8px !important;
+    }
+
+    # .input-file label {
+    #     color: #165DFF !important;
+    #     border: 1.2px dashed #165DFF !important;
+    #     border-left: none !important;
+    #     border-top: none !important;
+    # }
+    # .input-file .wrap {
+    #     color: #165DFF !important;
+    # }
+    # .input-file .or {
+    #     color: #165DFF !important;
+    # }
     """,
+    head=(
+        """
+    <script src="https://www.google.com/recaptcha/api.js?render=explicit" async defer></script>
+    <script type="text/javascript">
+        var onVerify = function(token) {
+            el=document.getElementById('verify').getElementsByTagName('textarea')[0];
+            el.value=token;
+            el.dispatchEvent(new Event('input'));
+        };
+    </script>
+    """
+        if flag_demo
+        else ""
+    ),
 ) as demo:
-    gr.Markdown("# PDFMathTranslate")
+    gr.Markdown(
+        "# [PDFMathTranslate @ GitHub](https://github.com/Byaidu/PDFMathTranslate)"
+    )
 
     with gr.Row():
         with gr.Column(scale=1):
-            gr.Markdown("## File")
+            gr.Markdown("## File | < 5 MB" if flag_demo else "## File")
             file_input = gr.File(
                 label="Document",
                 file_count="single",
                 file_types=[".pdf"],
                 type="filepath",
+                elem_classes=["input-file"],
             )
             gr.Markdown("## Option")
             service = gr.Dropdown(
@@ -214,12 +255,6 @@ with gr.Blocks(
                 choices=service_map.keys(),
                 value="Google",
             )
-            # lang_src = gr.Dropdown(
-            #     label="Source Language",
-            #     info="Which translation service to use. Some require keys",
-            #     choices=["Google", "DeepL", "DeepLX", "Ollama", "Azure"],
-            #     value="Google",
-            # )
             lang_to = gr.Dropdown(
                 label="Translate to",
                 info="Which language to translate to (optional)",
@@ -227,31 +262,28 @@ with gr.Blocks(
                 value="Chinese",
             )
             page_range = gr.Radio(
-                ["All", "First", "First 5 pages"],
+                choices=page_map.keys(),
                 label="Pages",
                 info="Translate the full document or just few pages (optional)",
-                value="All",
+                value=list(page_map.keys())[0],
             )
             model_id = gr.Textbox(
                 label="Model ID",
-                info="Please enter the identifier of the model you wish to use (e.g., gemma2). This identifier will be used to specify the particular model for translation.",
+                info="Please enter the identifier of the model you wish to use (e.g., gemma2). "
+                "This identifier will be used to specify the particular model for translation.",
                 # value="gemma2",
                 visible=False,  # hide by default
-            )
-            extra_args = gr.Textbox(
-                label="Advanced Arguments",
-                info="Extra arguments supported in commandline (optional)",
-                value="",
             )
             envs_status = "<span class='env-success'>- Properly configured.</span><br>"
 
             def details_wrapper(text_markdown):
-                text = f""" 
+                text = f"""
                 <details>
                     <summary>Technical details</summary>
                     {text_markdown}
                     - GitHub: <a href="https://github.com/Byaidu/PDFMathTranslate">Byaidu/PDFMathTranslate</a><br>
-                    - GUI by: <a href="https://github.com/reycn">Rongxin</a>    
+                    - GUI by: <a href="https://github.com/reycn">Rongxin</a><br>
+                    - Version: {__version__}
                 </details>"""
                 return text
 
@@ -260,7 +292,11 @@ with gr.Blocks(
                     not os.environ.get(env_var_name)
                     or os.environ.get(env_var_name) == ""
                 ):
-                    envs_status = f"<span class='env-warning'>- Warning: environmental not found or error ({env_var_name}).</span><br>- Please make sure that the environment variables are properly configured (<a href='https://github.com/Byaidu/PDFMathTranslate'>guide</a>).<br>"
+                    envs_status = (
+                        f"<span class='env-warning'>- Warning: environmental not found or error ({env_var_name})."
+                        + "</span><br>- Please make sure that the environment variables are properly configured "
+                        + "(<a href='https://github.com/Byaidu/PDFMathTranslate'>guide</a>).<br>"
+                    )
                 else:
                     value = str(os.environ.get(env_var_name))
                     envs_status = (
@@ -300,7 +336,11 @@ with gr.Blocks(
                     )  # show model id when service is selected
                     envs_status = env_var_checker("OLLAMA_HOST")
                 else:
-                    envs_status = "<span class='env-warning'>- Warning: model not in the list.</span><br>- Please report via (<a href='https://github.com/Byaidu/PDFMathTranslate'>guide</a>).<br>"
+                    envs_status = (
+                        "<span class='env-warning'>- Warning: model not in the list."
+                        "</span><br>- Please report via "
+                        "(<a href='https://github.com/Byaidu/PDFMathTranslate'>guide</a>).<br>"
+                    )
                 return envs_status, model_visibility
 
             output_title = gr.Markdown("## Translated", visible=False)
@@ -308,7 +348,11 @@ with gr.Blocks(
             output_file_dual = gr.File(
                 label="Download Translation (Dual)", visible=False
             )
-            translate_btn = gr.Button("Translate", variant="primary", visible=False)
+            recaptcha_response = gr.Textbox(
+                label="reCAPTCHA Response", elem_id="verify", visible=False
+            )
+            recaptcha_box = gr.HTML('<div id="recaptcha-box"></div>')
+            translate_btn = gr.Button("Translate", variant="primary")
             tech_details_tog = gr.Markdown(
                 details_wrapper(envs_status),
                 elem_classes=["secondary-text"],
@@ -323,12 +367,27 @@ with gr.Blocks(
     file_input.upload(
         upload_file,
         inputs=[file_input, service],
-        outputs=[file_input, preview, translate_btn],
+        outputs=[file_input, preview],
+        js=(
+            f"""
+            (a,b)=>{{
+                try{{
+                    grecaptcha.render('recaptcha-box',{{
+                        'sitekey':'{client_key}',
+                        'callback':'onVerify'
+                    }});
+                }}catch(error){{}}
+                return [a];
+            }}
+            """
+            if flag_demo
+            else ""
+        ),
     )
 
     translate_btn.click(
         translate,
-        inputs=[file_input, service, model_id, lang_to, page_range, extra_args],
+        inputs=[file_input, service, model_id, lang_to, page_range, recaptcha_response],
         outputs=[
             output_file,
             preview,
@@ -337,25 +396,30 @@ with gr.Blocks(
             output_file_dual,
             output_title,
         ],
-    )
+    ).then(lambda: None, js="()=>{grecaptcha.reset()}" if flag_demo else "")
 
 
-def setup_gui():
-    try:
-        demo.launch(server_name="0.0.0.0", debug=True, inbrowser=True, share=False)
-    except Exception:
-        print(
-            "Error launching GUI using 0.0.0.0.\nThis may be caused by global mode of proxy software."
-        )
+def setup_gui(share=False):
+    import doclayout_yolo  # cache # noqa: F401
+
+    if flag_demo:
+        demo.launch(server_name="0.0.0.0", max_file_size="5mb", inbrowser=True)
+    else:
         try:
-            demo.launch(
-                server_name="127.0.0.1", debug=True, inbrowser=True, share=False
-            )
+            demo.launch(server_name="0.0.0.0", debug=True, inbrowser=True, share=share)
         except Exception:
             print(
-                "Error launching GUI using 127.0.0.1.\nThis may be caused by global mode of proxy software."
+                "Error launching GUI using 0.0.0.0.\nThis may be caused by global mode of proxy software."
             )
-            demo.launch(server_name="0.0.0.0", debug=True, inbrowser=True, share=True)
+            try:
+                demo.launch(
+                    server_name="127.0.0.1", debug=True, inbrowser=True, share=share
+                )
+            except Exception:
+                print(
+                    "Error launching GUI using 127.0.0.1.\nThis may be caused by global mode of proxy software."
+                )
+                demo.launch(debug=True, inbrowser=True, share=True)
 
 
 # For auto-reloading while developing

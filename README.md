@@ -12,6 +12,8 @@ English | [简体中文](README_zh-CN.md)
     <img src="https://img.shields.io/pypi/v/pdf2zh"/></a>
   <a href="https://pepy.tech/projects/pdf2zh">
     <img src="https://static.pepy.tech/badge/pdf2zh"></a>
+  <a href="https://hub.docker.com/repository/docker/byaidu/pdf2zh">
+    <img src="https://img.shields.io/docker/pulls/byaidu/pdf2zh"></a>
   <!-- License -->
   <a href="./LICENSE">
     <img src="https://img.shields.io/github/license/Byaidu/PDFMathTranslate"/></a>
@@ -35,13 +37,15 @@ Feel free to provide feedback in [GitHub Issues](https://github.com/Byaidu/PDFMa
 
 <h2 id="updates">Updates</h2>
 
+- [Nov. 23 2024] [ONNX](https://github.com/onnx/onnx) support to reduce dependency sizes *(by [@Wybxc](https://github.com/Wybxc))*  
+- [Nov. 23 2024] 🌟 [Public Service](#demo)  online! *(by [@Byaidu](https://github.com/Byaidu))*  
+- [Nov. 23 2024] Non-PDF/A documents are now supported *(by [@reycn](https://github.com/reycn))*  
+- [Nov. 23 2024] Firewall for preventing web bots *(by [@Byaidu](https://github.com/Byaidu))*  
+- [Nov. 22 2024] GUI now supports Italian, and has been improved *(by [@Byaidu](https://github.com/Byaidu), [@reycn](https://github.com/reycn))*  
+- [Nov. 22 2024] You can now share your deployed service to others *(by [@Zxis233](https://github.com/Zxis233))*  
+- [Nov. 22 2024] Now supports Tencent Translation *(by [@hellofinch](https://github.com/hellofinch))*  
 - [Nov. 21 2024] GUI now supports downloading dual-document *(by [@reycn](https://github.com/reycn))*  
-- [Nov. 20 2024] GUI now supports specifying Ollama and OpenAI models *(by [@IuvenisSapiens](https://github.com/IuvenisSapiens), [@Byaidu](https://github.com/Byaidu))*  
 - [Nov. 20 2024] 🌟 [Demo](#demo)  online! *(by [@reycn](https://github.com/reycn))*  
-- [Nov. 20 2024] Supports [Docker](#docker) *(by [@Byaidu](https://github.com/Byaidu))*  
-- [Nov. 20 2024] Supports [multiple-threads translation](#threads) *(by [@Byaidu](https://github.com/Byaidu))*  
-- [Nov. 19 2024] Provides an [interactive graphical user interface](#gui) *(by [@reycn](https://github.com/reycn))*  
-- [Nov. 18 2024] Supports [more services: DeepL, DeepLX, and Azure](#services) *(by [@reycn](https://github.com/reycn), [@Hanaasagi](https://github.com/Hanaasagi))*  
 
 <h2 id="preview">Preview</h2>
 
@@ -49,9 +53,15 @@ Feel free to provide feedback in [GitHub Issues](https://github.com/Byaidu/PDFMa
 <img src="./docs/images/preview.gif" width="80%"/>
 </div>
 
-<h2 id="demo">Demo 🌟</h2>
+<h2 id="demo">Public Service 🌟</h2>
 
-You can try [our demo on HuggingFace](https://huggingface.co/spaces/reycn/PDFMathTranslate-Docker) without installation.  
+### Free Service (<https://pdf2zh.com/>)
+
+You can try our [public service](https://pdf2zh.com/) online without installation.  
+
+### Hugging Face Demo
+
+You can try [our demo on HuggingFace](https://huggingface.co/spaces/reycn/PDFMathTranslate-Docker) without installation.
 Note that the computing resources of the demo are limited, so please avoid abusing them.
 
 <h2 id="install">Installation and Usage</h2>
@@ -247,6 +257,14 @@ Use `-t` to specify how many threads to use in translation:
 pdf2zh example.pdf -t 1
 ```
 
+<h2 id="todo">TODO</h2>
+
+- [ ] Parse layout with [PaddleX (17cls)](https://github.com/PaddlePaddle/PaddleX/blob/17cc27ac3842e7880ca4aad92358d3ef8555429a/paddlex/repo_apis/PaddleDetection_api/object_det/official_categories.py#L81), [PaperMage (27cls)](https://github.com/allenai/papermage/blob/9cd4bb48cbedab45d0f7a455711438f1632abebe/README.md?plain=1#L102), [SAM2](https://github.com/facebookresearch/sam2)
+
+- [ ] Fix page rotation, table of contents, format of list
+
+- [ ] Fix special size of first character in paragraphs
+
 <h2 id="acknowledgement">Acknowledgements</h2>
 
 - Document merging: [PyMuPDF](https://github.com/pymupdf/PyMuPDF)
@@ -267,12 +285,14 @@ pdf2zh example.pdf -t 1
   <img src="https://opencollective.com/PDFMathTranslate/contributors.svg?width=890&button=false" />
 </a>
 
+![Alt](https://repobeats.axiom.co/api/embed/dfa7583da5332a11468d686fbd29b92320a6a869.svg "Repobeats analytics image")
+
 <h2 id="star_hist">Star History</h2>
 
 <a href="https://star-history.com/#Byaidu/PDFMathTranslate&Date">
  <picture>
    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Byaidu/PDFMathTranslate&type=Date&theme=dark" />
    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Byaidu/PDFMathTranslate&type=Date" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Byaidu/PDFMathTranslate&type=Date" width="70%"/>
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Byaidu/PDFMathTranslate&type=Date"/>
  </picture>
 </a>
