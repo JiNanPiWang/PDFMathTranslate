@@ -39,7 +39,6 @@ Feel free to provide feedback in [GitHub Issues](https://github.com/Byaidu/PDFMa
 
 - [Nov. 23 2024] [ONNX](https://github.com/onnx/onnx) support to reduce dependency sizes *(by [@Wybxc](https://github.com/Wybxc))*  
 - [Nov. 23 2024] 🌟 [Public Service](#demo)  online! *(by [@Byaidu](https://github.com/Byaidu))*  
-- [Nov. 23 2024] Non-PDF/A documents are now supported *(by [@reycn](https://github.com/reycn))*  
 - [Nov. 23 2024] Firewall for preventing web bots *(by [@Byaidu](https://github.com/Byaidu))*  
 - [Nov. 22 2024] GUI now supports Italian, and has been improved *(by [@Byaidu](https://github.com/Byaidu), [@reycn](https://github.com/reycn))*  
 - [Nov. 22 2024] You can now share your deployed service to others *(by [@Zxis233](https://github.com/Zxis233))*  
@@ -114,7 +113,7 @@ See [documentation for GUI](./docs/README_GUI.md) for more details.
 
     ```bash
     docker pull byaidu/pdf2zh
-    docker run -p 7860:7860 byaidu/pdf2zh
+    docker run -d -p 7860:7860 byaidu/pdf2zh
     ```
 
 2. Open in browser:
@@ -259,11 +258,13 @@ pdf2zh example.pdf -t 1
 
 <h2 id="todo">TODO</h2>
 
-- [ ] Parse layout with [PaddleX (17cls)](https://github.com/PaddlePaddle/PaddleX/blob/17cc27ac3842e7880ca4aad92358d3ef8555429a/paddlex/repo_apis/PaddleDetection_api/object_det/official_categories.py#L81), [PaperMage (27cls)](https://github.com/allenai/papermage/blob/9cd4bb48cbedab45d0f7a455711438f1632abebe/README.md?plain=1#L102), [SAM2](https://github.com/facebookresearch/sam2)
+- [ ] Parse layout with [PaddleX](https://github.com/PaddlePaddle/PaddleX/blob/17cc27ac3842e7880ca4aad92358d3ef8555429a/paddlex/repo_apis/PaddleDetection_api/object_det/official_categories.py#L81), [PaperMage](https://github.com/allenai/papermage/blob/9cd4bb48cbedab45d0f7a455711438f1632abebe/README.md?plain=1#L102), [SAM2](https://github.com/facebookresearch/sam2)
 
 - [ ] Fix page rotation, table of contents, format of list
 
-- [ ] Fix special size of first character in paragraphs
+- [ ] Fix pixel formula in old paper
+
+- [ ] Support multiple language with [Noto Font](https://fonts.google.com/noto), [Ubuntu Font](https://design.ubuntu.com/font)
 
 <h2 id="acknowledgement">Acknowledgements</h2>
 
