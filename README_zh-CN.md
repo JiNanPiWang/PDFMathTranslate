@@ -33,10 +33,11 @@
 - 🌐 支持 [多种语言](#language) 和 [诸多翻译服务](#services)
 - 🤖 提供 [命令行工具](#usage)，[图形交互界面](#gui)，以及 [容器化部署](#docker)
 
-欢迎在 [GitHub Issues](https://github.com/Byaidu/PDFMathTranslate/issues) 或 [Telegram 用户群](https://t.me/+Z9_SgnxmsmA5NzBl) 中提供反馈。
+欢迎在 [GitHub Issues](https://github.com/Byaidu/PDFMathTranslate/issues)、[Telegram 用户群](https://t.me/+Z9_SgnxmsmA5NzBl) 或 [QQ 用户群](https://qm.qq.com/q/DixZCxQej0) 中提供反馈。
 
 <h2 id="updates">近期更新</h2>
 
+- [Nov. 26 2024] CLI 现在已支持（多个）在线 PDF 文件 *(by [@reycn](https://github.com/reycn))*  
 - [Nov. 24 2024] 为降低依赖大小，提供 [ONNX](https://github.com/onnx/onnx) 支持 *(by [@Wybxc](https://github.com/Wybxc))*  
 - [Nov. 23 2024] 🌟 [免费公共服务](#demo) 上线! *(by [@Byaidu](https://github.com/Byaidu))*  
 - [Nov. 23 2024] 防止网页爬虫的防火墙 *(by [@Byaidu](https://github.com/Byaidu))*  
@@ -76,7 +77,7 @@
       pip install pdf2zh
       ```
 
-  3. 开始使用：
+  3. 执行翻译，生成文件位于 [当前工作目录](https://chatgpt.com/share/6745ed36-9acc-800e-8a90-59204bd13444)：
 
       ```bash
       pdf2zh document.pdf
@@ -105,7 +106,7 @@
 
     <img src="./docs/images/gui.gif" width="500"/>
 
-查看 [documentation for GUI](./docs/README_GUI.md) 获取细节说明.
+查看 [documentation for GUI](./docs/README_GUI.md) 获取细节说明
 
 <h3 id="docker">方法三、容器化部署</h3>
 
@@ -138,7 +139,7 @@
 
 <h2 id="usage">高级选项</h2>
 
-在命令行中执行翻译命令，生成译文文档 `example-zh.pdf` 和双语对照文档 `example-dual.pdf`，默认使用 Google 翻译服务
+在命令行中执行翻译命令，在当前工作目录下生成译文文档 `example-zh.pdf` 和双语对照文档 `example-dual.pdf`，默认使用 Google 翻译服务
 
 <img src="./docs/images/cmd.explained.png" width="580px"  alt="cmd"/>  
 
@@ -146,15 +147,18 @@
 
 | Option    | Function | Example |
 | -------- | ------- |------- |
+| files | 本地文件 |  `pdf2zh ~/local.pdf` |
+| links | 在线文件 |  `pdf2zh http://arxiv.org/paper.pdf` |
 | `-i`  | [进入图形界面](#gui) |  `pdf2zh -i` |
 | `-p`  | [仅翻译部分文档](#partial) |  `pdf2zh example.pdf -p 1` |
 | `-li` | [源语言](#languages) |  `pdf2zh example.pdf -li en` |
 | `-lo` | [目标语言](#languages) |  `pdf2zh example.pdf -lo zh` |
 | `-s`  | [指定翻译服务](#services) |  `pdf2zh example.pdf -s deepl` |
 | `-t`  | [多线程](#threads) | `pdf2zh example.pdf -t 1` |
+| `-o`  | 输出目录 | `pdf2zh example.pdf -o output` |
 | `-f`, `-c` | [例外规则](#exceptions) | `pdf2zh example.pdf -f "(MS.*)"` |
 
-某些服务需要设置环境变量。关于设置环境变量的详细说明，请参考 [ChatGPT](https://chatgpt.com/share/6734a83d-9d48-800e-8a46-f57ca6e8bcb4)
+某些服务需要 [设置环境变量](https://chatgpt.com/share/6734a83d-9d48-800e-8a46-f57ca6e8bcb4)
 
 <h3 id="partial">全文或部分文档翻译</h3>
 
@@ -245,9 +249,22 @@ pdf2zh example.pdf -s openai:gpt-4o
 pdf2zh example.pdf -s azure
 ```
 
+- **腾讯机器翻译**
+
+参考 [腾讯机器翻译](https://cloud.tencent.com/product/tmt)
+
+需设置以下环境变量：
+
+- `TENCENT_SECRET_ID`, e.g., `export TENCENT_SECRET_ID=AKIDxxx`
+- `TENCENT_SECRET_KEY`, e.g., `export TENCENT_SECRET_KEY=xxx`
+
+```bash
+pdf2zh example.pdf -s tencent
+```
+
 <h3 id="exceptions">指定例外规则</h3>
 
-使用正则表达式指定需保留的公式字体与字符
+使用正则表达式指定需保留的公式字体与字符：
 
 ```bash
 pdf2zh example.pdf -f "(CM[^RT].*|MS.*|.*Ital)" -c "(\(|\||\)|\+|=|\d|[\u0080-\ufaff])"

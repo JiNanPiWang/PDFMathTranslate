@@ -1,6 +1,6 @@
 [project]
 name = "pdf2zh"
-version = "1.8.0"
+version = "1.8.1"
 description = "Latex PDF Translator"
 authors = [{ name = "Byaidu", email = "byaidux@gmail.com" }]
 license = "AGPL-3.0"
@@ -11,15 +11,13 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "charset-normalizer",
-    "cryptography",
     "requests",
     "pymupdf",
     "tqdm",
     "tenacity",
     "numpy",
     "ollama",
-    "deepl<1.19.1",
+    "deepl",
     "openai",
     "azure-ai-translation-text<=1.0.1",
     "gradio",
@@ -27,6 +25,7 @@ dependencies = [
     "onnx",
     "onnxruntime",
     "opencv-python-headless",
+    "pdfminer.six>=20240706",
 ]
 
 [project.optional-dependencies]

@@ -33,11 +33,12 @@ PDF scientific paper translation and bilingual comparison.
 - 🌐 Support [multiple languages](#language), and diverse [translation services](#services).
 - 🤖 Provides [commandline tool](#usage), [interactive user interface](#gui), and [Docker](#docker)
 
-Feel free to provide feedback in [GitHub Issues](https://github.com/Byaidu/PDFMathTranslate/issues) or [Telegram Group](https://t.me/+Z9_SgnxmsmA5NzBl).
+Feel free to provide feedback in [GitHub Issues](https://github.com/Byaidu/PDFMathTranslate/issues), [Telegram Group](https://t.me/+Z9_SgnxmsmA5NzBl) or [QQ Group](https://qm.qq.com/q/DixZCxQej0).
 
 <h2 id="updates">Updates</h2>
 
-- [Nov. 23 2024] [ONNX](https://github.com/onnx/onnx) support to reduce dependency sizes *(by [@Wybxc](https://github.com/Wybxc))*  
+- [Nov. 26 2024] CLI now supports online file(s) *(by [@reycn](https://github.com/reycn))*  
+- [Nov. 24 2024] [ONNX](https://github.com/onnx/onnx) support to reduce dependency sizes *(by [@Wybxc](https://github.com/Wybxc))*  
 - [Nov. 23 2024] 🌟 [Public Service](#demo)  online! *(by [@Byaidu](https://github.com/Byaidu))*  
 - [Nov. 23 2024] Firewall for preventing web bots *(by [@Byaidu](https://github.com/Byaidu))*  
 - [Nov. 22 2024] GUI now supports Italian, and has been improved *(by [@Byaidu](https://github.com/Byaidu), [@reycn](https://github.com/reycn))*  
@@ -70,13 +71,13 @@ We provide three methods for using this project: [Commandline](#cmd), [GUI](#gui
 <h3 id="cmd">Method I. Commandline</h3>
 
   1. Python installed (3.8 <= version <= 3.12)
-  2. Install our package
+  2. Install our package:
 
       ```bash
       pip install pdf2zh
       ```
 
-  3. Use:
+  3. Execute translation, files generated in [current working directory](https://chatgpt.com/share/6745ed36-9acc-800e-8a90-59204bd13444):
 
       ```bash
       pdf2zh document.pdf
@@ -85,7 +86,7 @@ We provide three methods for using this project: [Commandline](#cmd), [GUI](#gui
 <h3 id="gui">Method II. GUI</h3>
 
 1. Python installed (3.8 <= version <= 3.12)
-2. Install our package
+2. Install our package:
 
       ```bash
       pip install pdf2zh
@@ -138,7 +139,7 @@ For docker deployment on cloud service:
 
 <h2 id="usage">Advanced Options</h2>
 
-Execute the translation command in the command line to generate the translated document `example-zh.pdf` and the bilingual document `example-dual.pdf` in the current directory. Use Google as the default translation service.
+Execute the translation command in the command line to generate the translated document `example-zh.pdf` and the bilingual document `example-dual.pdf` in the current working directory. Use Google as the default translation service.
 
 <img src="./docs/images/cmd.explained.png" width="580px"  alt="cmd"/>  
 
@@ -146,15 +147,18 @@ In the following table, we list all advanced options for reference:
 
 | Option    | Function | Example |
 | -------- | ------- |------- |
+| files | Local files |  `pdf2zh ~/local.pdf` |
+| links | Online files |  `pdf2zh http://arxiv.org/paper.pdf` |
 | `-i`  | [Enter GUI](#gui) |  `pdf2zh -i` |
 | `-p`  | [Partial document translation](#partial) |  `pdf2zh example.pdf -p 1` |
 | `-li` | [Source language](#languages) |  `pdf2zh example.pdf -li en` |
 | `-lo` | [Target language](#languages) |  `pdf2zh example.pdf -lo zh` |
 | `-s`  | [Translation service](#services) |  `pdf2zh example.pdf -s deepl` |
 | `-t`  | [Multi-threads](#threads) | `pdf2zh example.pdf -t 1` |
+| `-o`  | Output dir | `pdf2zh example.pdf -o output` |
 | `-f`, `-c` | [Exceptions](#exceptions) | `pdf2zh example.pdf -f "(MS.*)"` |
 
-Some services require setting environmental variables. Please refer to [ChatGPT](https://chatgpt.com/share/6734a83d-9d48-800e-8a46-f57ca6e8bcb4) for how to set environment variables.
+Some services require setting [environmental variables](https://chatgpt.com/share/6734a83d-9d48-800e-8a46-f57ca6e8bcb4).
 
 <h3 id="partial">Full / partial document translation</h3>
 
@@ -239,10 +243,21 @@ pdf2zh example.pdf -li en -lo ja
   ```bash
   pdf2zh example.pdf -s azure
   ```
+- **Tencent Machine Translation**
+
+  See [Tencent Machine Translation](https://www.tencentcloud.com/products/tmt?from_qcintl=122110104)
+
+  Following ENVs are required:
+  - `TENCENT_SECRET_ID`, e.g., `export TENCENT_SECRET_ID=AKIDxxx`
+  - `TENCENT_SECRET_KEY`, e.g, `export TENCENT_SECRET_KEY=xxx`
+
+  ```bash
+  pdf2zh example.pdf -s tencent
+  ```
 
 <h3 id="exceptions">Translate wih exceptions</h3>
 
-Use regex to specify formula fonts and characters that need to be preserved.
+Use regex to specify formula fonts and characters that need to be preserved:
 
 ```bash
 pdf2zh example.pdf -f "(CM[^RT].*|MS.*|.*Ital)" -c "(\(|\||\)|\+|=|\d|[\u0080-\ufaff])"
@@ -265,6 +280,8 @@ pdf2zh example.pdf -t 1
 - [ ] Fix pixel formula in old paper
 
 - [ ] Support multiple language with [Noto Font](https://fonts.google.com/noto), [Ubuntu Font](https://design.ubuntu.com/font)
+
+- [ ] Retry except KeyboardInterrupt
 
 <h2 id="acknowledgement">Acknowledgements</h2>
 
