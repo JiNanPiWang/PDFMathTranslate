@@ -66,7 +66,7 @@ Note that the computing resources of the demo are limited, so please avoid abusi
 
 <h2 id="install">Installation and Usage</h2>
 
-We provide three methods for using this project: [Commandline](#cmd), [GUI](#gui), [Portable](#portable), and [Docker](#docker).
+We provide three methods for using this project: [Commandline](#cmd), [Portable](#portable), [GUI](#gui), and [Docker](#docker).
 
 <h3 id="cmd">Method I. Commandline</h3>
 
@@ -83,7 +83,13 @@ We provide three methods for using this project: [Commandline](#cmd), [GUI](#gui
       pdf2zh document.pdf
       ```
 
-<h3 id="gui">Method II. GUI</h3>
+<h3 id="portable">Method II. Portable</h3>
+
+No need to pre-install Python environment
+
+Download and double-click to run [setup.bat](https://raw.githubusercontent.com/Byaidu/PDFMathTranslate/refs/heads/main/setup.bat)
+
+<h3 id="gui">Method III. GUI</h3>
 
 1. Python installed (3.8 <= version <= 3.12)
 2. Install our package:
@@ -107,10 +113,6 @@ We provide three methods for using this project: [Commandline](#cmd), [GUI](#gui
     <img src="./docs/images/gui.gif" width="500"/>
 
 See [documentation for GUI](./docs/README_GUI.md) for more details.
-
-<h3 id="portable">Method III. Portable</h3>
-
-Download and double-click to run [setup.bat](https://raw.githubusercontent.com/Byaidu/PDFMathTranslate/refs/heads/main/setup.bat)
 
 <h3 id="docker">Method IV. Docker</h3>
 
@@ -204,7 +206,7 @@ pdf2zh example.pdf -li en -lo ja
 
   See [DeepLX](https://github.com/OwO-Network/DeepLX)
 
-  Set ENVs to construct an endpoint like: `{DEEPL_SERVER_URL}/translate`
+  Set ENVs to construct an endpoint like: `{DEEPLX_SERVER_URL}/{DEEPLX_AUTH_KEY}/translate`
   - `DEEPLX_SERVER_URL` (Optional), e.g., `export DEEPLX_SERVER_URL=https://api.deeplx.org`
   - `DEEPLX_AUTH_KEY`, e.g., `export DEEPLX_AUTH_KEY=xxx`
 
@@ -283,8 +285,6 @@ pdf2zh example.pdf -t 1
 
 - [ ] Fix pixel formula in old papers
 
-- [ ] Support multiple language with [Noto Font](https://fonts.google.com/noto), [Ubuntu Font](https://design.ubuntu.com/font)
-
 - [ ] Async retry except KeyboardInterrupt
 
 - [ ] Knuth–Plass algorithm for western languages
@@ -304,6 +304,8 @@ pdf2zh example.pdf -t 1
 - Layout parsing: [DocLayout-YOLO](https://github.com/opendatalab/DocLayout-YOLO)
 
 - Document standard: [PDF Explained](https://zxyle.github.io/PDF-Explained/), [PDF Cheat Sheets](https://pdfa.org/resource/pdf-cheat-sheets/)
+
+- Multilingual Font: [Go Noto Universal](https://github.com/satbyy/go-noto-universal)
 
 <h2 id="contrib">Contributors</h2>
 

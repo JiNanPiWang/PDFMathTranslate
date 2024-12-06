@@ -66,7 +66,7 @@
 
 <h2 id="install">安装和使用</h2>
 
-我们提供了三种使用该项目的方法：[命令行工具](#cmd)、[图形交互界面](#gui)、[便携式安装](#portable) 和 [容器化部署](#docker).
+我们提供了三种使用该项目的方法：[命令行工具](#cmd)、[便携式安装](#portable)、[图形交互界面](#gui) 和 [容器化部署](#docker).
 
 <h3 id="cmd">方法一、命令行工具</h3>
 
@@ -83,7 +83,13 @@
       pdf2zh document.pdf
       ```
 
-<h3 id="gui">方法二、图形交互界面</h3>
+<h3 id="portable">方法二、便携式安装</h3>
+
+无需预先安装 Python 环境
+
+下载并双击运行 [setup.bat](https://raw.githubusercontent.com/Byaidu/PDFMathTranslate/refs/heads/main/setup.bat)
+
+<h3 id="gui">方法三、图形交互界面</h3>
 
 1. 确保安装了版本大于 3.8 且小于 3.12 的 Python
 2. 安装此程序：
@@ -107,10 +113,6 @@
     <img src="./docs/images/gui.gif" width="500"/>
 
 查看 [documentation for GUI](./docs/README_GUI.md) 获取细节说明
-
-<h3 id="portable">方法三、便携式安装</h3>
-
-下载并双击运行 [setup.bat](https://raw.githubusercontent.com/Byaidu/PDFMathTranslate/refs/heads/main/setup.bat)
 
 <h3 id="docker">方法四、容器化部署</h3>
 
@@ -205,13 +207,13 @@ pdf2zh example.pdf -s deepl
 
 参考 [DeepLX](https://github.com/OwO-Network/DeepLX)
 
-设置环境变量构建接入点：`{DEEPLX_SERVER_URL}/translate`
+设置环境变量构建接入点：`{DEEPLX_SERVER_URL}/{DEEPLX_AUTH_KEY}/translate`
 
-- `DEEPLX_SERVER_URL`（可选）, e.g., `export DEEPLX_SERVER_URL=https://api.deepl.com`
+- `DEEPLX_SERVER_URL`（可选）, e.g., `export DEEPLX_SERVER_URL=https://api.deeplx.org`
 - `DEEPLX_AUTH_KEY`, e.g., `export DEEPLX_AUTH_KEY=xxx`
 
 ```bash
-pdf2zh example.pdf -s deepl
+pdf2zh example.pdf -s deeplx
 ```
 
 - **Ollama**
@@ -295,6 +297,8 @@ pdf2zh example.pdf -t 1
 - 布局解析：[DocLayout-YOLO](https://github.com/opendatalab/DocLayout-YOLO)
 
 - 文档标准：[PDF Explained](https://zxyle.github.io/PDF-Explained/), [PDF Cheat Sheets](https://pdfa.org/resource/pdf-cheat-sheets/)
+
+- 多语言字体：[Go Noto Universal](https://github.com/satbyy/go-noto-universal)
 
 <h2 id="contrib">贡献者</h2>
 

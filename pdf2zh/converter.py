@@ -26,6 +26,7 @@ from pdf2zh.translator import (
     AzureTranslator,
     TencentTranslator,
 )
+from pymupdf import Font
 
 log = logging.getLogger(__name__)
 
@@ -123,27 +124,34 @@ class TranslateConverter(PDFConverterEx):
         lang_in: str = "",
         lang_out: str = "",
         service: str = "",
+        resfont: str = "",
+        noto: Font = None,
     ) -> None:
         super().__init__(rsrcmgr)
         self.vfont = vfont
         self.vchar = vchar
         self.thread = thread
         self.layout = layout
+        self.resfont = resfont
+        self.noto = noto
+        self.translator: BaseTranslator = None
         param = service.split(":", 1)
-        if param[0] == "google":
-            self.translator: BaseTranslator = GoogleTranslator(service, lang_out, lang_in, None)
-        elif param[0] == "deepl":
-            self.translator: BaseTranslator = DeepLTranslator(service, lang_out, lang_in, None)
-        elif param[0] == "deeplx":
-            self.translator: BaseTranslator = DeepLXTranslator(service, lang_out, lang_in, None)
-        elif param[0] == "ollama":
-            self.translator: BaseTranslator = OllamaTranslator(service, lang_out, lang_in, param[1])
-        elif param[0] == "openai":
-            self.translator: BaseTranslator = OpenAITranslator(service, lang_out, lang_in, param[1])
-        elif param[0] == "azure":
-            self.translator: BaseTranslator = AzureTranslator(service, lang_out, lang_in, None)
-        elif param[0] == "tencent":
-            self.translator: BaseTranslator = TencentTranslator(service, lang_out, lang_in, None)
+        service_id = param[0]
+        service_model = param[1] if len(param) > 1 else None
+        if service_id == "google":
+            self.translator = GoogleTranslator(service, lang_out, lang_in, None)
+        elif service_id == "deepl":
+            self.translator = DeepLTranslator(service, lang_out, lang_in, None)
+        elif service_id == "deeplx":
+            self.translator = DeepLXTranslator(service, lang_out, lang_in, None)
+        elif service_id == "ollama":
+            self.translator = OllamaTranslator(service, lang_out, lang_in, service_model)
+        elif service_id == "openai":
+            self.translator = OpenAITranslator(service, lang_out, lang_in, service_model)
+        elif service_id == "azure":
+            self.translator = AzureTranslator(service, lang_out, lang_in, None)
+        elif service_id == "tencent":
+            self.translator = TencentTranslator(service, lang_out, lang_in, None)
         else:
             raise ValueError("Unsupported translation service")
 
@@ -164,7 +172,7 @@ class TranslateConverter(PDFConverterEx):
         # 全局
         lstk: list[LTLine] = []         # 全局线条栈
         xt: LTChar = None               # 上一个字符
-        xt_cls: int = -1                # 上一个字符所属段落
+        xt_cls: int = -1                # 上一个字符所属段落，保证无论第一个字符属于哪个类别都可以触发新段落
         vmax: float = ltpage.width / 4  # 行内公式最大宽度
         ops: str = ""                   # 渲染结果
 
@@ -210,6 +218,10 @@ class TranslateConverter(PDFConverterEx):
                 # 读取当前字符在 layout 中的类别
                 cx, cy = np.clip(int(child.x0), 0, w - 1), np.clip(int(child.y0), 0, h - 1)
                 cls = layout[cy, cx]
+                # 锚定文档中 bullet 的位置
+                if child.get_text() == "•":
+                    cls = 0
+                # 判定当前字符是否属于公式
                 if (                                                                                        # 判定当前字符是否属于公式
                     cls == 0                                                                                # 1. 类别为保留区域
                     or (cls == xt_cls and len(sstk[-1].strip()) > 1 and child.size < pstk[-1].size * 0.79)  # 2. 角标字体，有 0.76 的角标和 0.799 的大写，这里用 0.79 取中，同时考虑首字母放大的情况
@@ -342,7 +354,9 @@ class TranslateConverter(PDFConverterEx):
         ############################################################
         # C. 新文档排版
         def raw_string(fcur: str, cstk: str):  # 编码字符串
-            if isinstance(self.fontmap[fcur], PDFCIDFont):  # 判断编码长度
+            if fcur == 'noto':
+                return "".join(["%04x" % self.noto.has_glyph(ord(c)) for c in cstk])
+            elif isinstance(self.fontmap[fcur], PDFCIDFont):  # 判断编码长度
                 return "".join(["%04x" % ord(c) for c in cstk])
             else:
                 return "".join(["%02x" % ord(c) for c in cstk])
@@ -387,13 +401,16 @@ class TranslateConverter(PDFConverterEx):
                     #     pass
                     try:
                         if fcur_ is None and self.fontmap["tiro"].to_unichr(ord(ch)) == ch:
-                            fcur_ = "tiro"  # 默认英文字体
+                            fcur_ = "tiro"  # 默认拉丁字体
                     except Exception:
                         pass
                     if fcur_ is None:
-                        fcur_ = "china-ss"  # 默认中文字体
+                        fcur_ = self.resfont  # 默认非拉丁字体
                     # print(self.fontid[font],fcur_,ch,font.char_width(ord(ch)))
-                    adv = self.fontmap[fcur_].char_width(ord(ch)) * size
+                    if fcur_ == 'noto':
+                        adv = self.noto.char_lengths(ch, size)[0]
+                    else:
+                        adv = self.fontmap[fcur_].char_width(ord(ch)) * size
                     ptr += 1
                 if (                                # 输出文字缓冲区
                     fcur_ != fcur                   # 1. 字体更新
@@ -405,7 +422,7 @@ class TranslateConverter(PDFConverterEx):
                         cstk = ""
                 if brk and x + adv > x1 + 0.1 * size:  # 到达右边界且原文段落存在换行
                     x = x0
-                    lang_space = {"zh-CN": 1.4, "zh-TW": 1.4, "ja": 1.1, "ko": 1.2, "en": 1.2}  # CJK
+                    lang_space = {"zh-CN": 1.4, "zh-TW": 1.4, "ja": 1.1, "ko": 1.2, "en": 1.2, "ar": 1.0, "ru": 0.8, "uk": 0.8, "ta": 0.8}
                     y -= size * lang_space.get(self.translator.lang_out, 1.1)  # 小语种大多适配 1.1
                 if vy_regex:  # 插入公式
                     fix = 0
